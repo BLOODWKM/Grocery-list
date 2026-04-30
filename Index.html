@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Grocery List</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; min-height: 100vh; padding: 1.5rem 1rem; color: #1a1a1a; }
+  #app { max-width: 600px; margin: 0 auto; }
+  h1 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
+  .subtitle { font-size: 14px; color: #666; margin-bottom: 1.5rem; }
+  .card { background: #fff; border-radius: 12px; border: 1px solid #e5e5e0; padding: 1.25rem; margin-bottom: 1rem; }
+  .section-label { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+  textarea, input[type=text] { width: 100%; background: #f9f9f7; border: 1px solid #e0e0d8; border-radius: 8px; padding: 10px 12px; font-size: 14px; color: #1a1a1a; font-family: inherit; }
+  textarea { resize: vertical; min-height: 110px; line-height: 1.5; }
+  textarea:focus, input[type=text]:focus { outline: none; border-color: #aaa; background: #fff; }
+  textarea::placeholder, input::placeholder { color: #bbb; }
+  .hint { font-size: 12px; color: #aaa; margin-top: 6px; line-height: 1.5; }
+  .btn-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+  button { border: 1px solid #ddd; background: #fff; border-radius: 8px; padding: 8px 16px; font-size: 13px; color: #1a1a1a; cursor: pointer; font-family: inherit; transition: all 0.12s; }
+  button:hover { background: #f5f5f0; }
+  button:active { transform: scale(0.98); }
+  button.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  button.primary:hover { background: #333; }
+  button.danger { color: #c0392b; border-color: #f0c0bc; }
+  button.danger:hover { background: #fff5f5; }
+  .preview-box { background: #f9f9f7; border: 1px solid #e0e0d8; border-radius: 8px; padding: 10px 12px; margin-top: 10px; max-height: 200px; overflow-y: auto; }
+  .preview-title { font-size: 12px; color: #888; margin-bottom: 8px; }
+  .preview-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; }
+  .preview-item input[type=checkbox] { width: 15px; height: 15px; flex-shrink: 0; cursor: pointer; accent-color: #1a1a1a; }
+  .preview-item label { color: #1a1a1a; cursor: pointer; flex: 1; }
+  .preview-item label.removed { text-decoration: line-through; color: #bbb; }
+  .list-section { margin-top: 0; }
+  .category-group { margin-bottom: 1.25rem; }
+  .category-title { font-size: 12px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; padding-bottom: 6px; border-bottom: 1px solid #eee; }
+  .item-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f0f0ec; }
+  .item-row:last-child { border-bottom: none; }
+  .item-check { width: 20px; height: 20px; border: 1.5px solid #ccc; border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.12s; }
+  .item-check.checked { background: #1a1a1a; border-color: #1a1a1a; }
+  .item-check.checked::after { content: ''; display: block; width: 5px; height: 9px; border: 2px solid #fff; border-top: none; border-left: none; transform: rotate(45deg) translateY(-1px); }
+  .item-label { flex: 1; font-size: 14px; color: #1a1a1a; }
+  .item-label.crossed { text-decoration: line-through; color: #bbb; }
+  .item-qty { font-size: 13px; color: #888; white-space: nowrap; }
+  .item-del { opacity: 0; font-size: 18px; color: #ccc; cursor: pointer; padding: 0 4px; background: none; border: none; line-height: 1; }
+  .item-row:hover .item-del { opacity: 1; }
+  .add-row { display: flex; gap: 8px; margin-top: 12px; }
+  .add-row input { flex: 1; }
+  .add-row input.qty { flex: 0 0 90px; }
+  .summary-bar { display: flex; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .stat-card { background: #fff; border: 1px solid #e5e5e0; border-radius: 10px; padding: 10px 16px; flex: 1; min-width: 90px; }
+  .stat-label { font-size: 11px; color: #999; margin-bottom: 2px; }
+  .stat-num { font-size: 22px; font-weight: 600; color: #1a1a1a; }
+  .empty-state { color: #bbb; font-size: 14px; padding: 2rem 0; text-align: center; }
+  .success-msg { font-size: 13px; color: #27ae60; }
+  .error-msg { font-size: 13px; color: #c0392b; }
+  .save-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px; }
+  .save-indicator { font-size: 12px; color: #aaa; display: flex; align-items: center; gap: 5px; }
+  .save-dot { width: 7px; height: 7px; border-radius: 50%; background: #27ae60; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>Grocery list</h1>
+  <p class="subtitle">Copy a full recipe page — ads get filtered out automatically. Add from as many recipes as you want.</p>
+
+  <div class="card">
+    <div class="section-label">Add from a recipe page</div>
+    <textarea id="paste-input" placeholder="Go to any recipe website, select all (Ctrl+A or Cmd+A), copy, and paste here. Ads and junk are filtered out automatically."></textarea>
+    <p class="hint">Works with AllRecipes, Food Network, What's Gaby Cooking, Skinnytaste, and most recipe sites.</p>
+    <div class="btn-row">
+      <button class="primary" onclick="cleanAndPreview()">Clean &amp; preview</button>
+      <span id="clean-status"></span>
+    </div>
+    <div id="preview-area" style="display:none">
+      <div class="preview-box">
+        <div class="preview-title">Uncheck anything that is NOT an ingredient, then click Add.</div>
+        <div id="preview-items"></div>
+      </div>
+      <div style="margin-top:10px;">
+        <div style="font-size:12px;color:#888;margin-bottom:6px;">Recipe multiplier:</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+          <button id="mult-1" class="primary" onclick="setMultiplier(1)" style="padding:5px 14px;font-size:13px;">1x</button>
+          <button id="mult-2" onclick="setMultiplier(2)" style="padding:5px 14px;font-size:13px;">2x double</button>
+          <button id="mult-3" onclick="setMultiplier(3)" style="padding:5px 14px;font-size:13px;">3x triple</button>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="primary" onclick="confirmAdd()">Add checked items to list</button>
+        <button onclick="cancelPreview()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="save-bar">
+    <div class="save-indicator"><div class="save-dot" id="save-dot"></div><span id="save-msg">List auto-saves as you go</span></div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="copyList()" style="font-size:12px;padding:5px 12px;">Copy list</button>
+      <button class="danger" onclick="clearAll()" style="font-size:12px;padding:5px 12px;">Clear entire list</button>
+    </div>
+  </div>
+
+  <div id="summary-bar" class="summary-bar" style="display:none">
+    <div class="stat-card"><div class="stat-label">Total items</div><div class="stat-num" id="s-total">0</div></div>
+    <div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-num" id="s-remaining">0</div></div>
+    <div class="stat-card"><div class="stat-label">Checked off</div><div class="stat-num" id="s-done">0</div></div>
+  </div>
+
+  <div class="card list-section">
+    <div class="section-label">Your list</div>
+    <div id="grocery-list"></div>
+    <div class="add-row">
+      <input type="text" id="manual-item" placeholder="Quick add an item..." onkeydown="if(event.key==='Enter')addManual()" />
+      <input type="text" id="manual-qty" class="qty" placeholder="Qty" onkeydown="if(event.key==='Enter')addManual()" />
+      <button onclick="addManual()">Add</button>
+    </div>
+    <div style="margin-top:10px;">
+      <button class="danger" id="clear-btn" onclick="clearChecked()" style="display:none">Remove checked items</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CATEGORIES = ['Produce','Meat & Seafood','Dairy & Eggs','Bread & Bakery','Pantry','Frozen','Beverages','Snacks','Other'];
+let items = [], nextId = 1, previewCandidates = [], currentMultiplier = 1;
+function uid() { return nextId++; }
+
+function setMultiplier(n) {
+  currentMultiplier = n;
+  ['1','2','3'].forEach(x => {
+    const btn = document.getElementById('mult-'+x);
+    if (btn) btn.className = (parseInt(x) === n) ? 'primary' : '';
+  });
+}
+
+function multiplyQty(qty, multiplier) {
+  if (!qty || multiplier === 1) return qty;
+  // Replace all leading numbers (including fractions and unicode fractions)
+  const fractions = {'½':'1/2','¼':'1/4','¾':'3/4','⅓':'1/3','⅔':'2/3','⅛':'1/8'};
+  let q = qty;
+  Object.entries(fractions).forEach(([sym,val]) => { q = q.replace(sym, val); });
+  return q.replace(/([\d]+(?:\/[\d]+)?(?:\.\d+)?)/g, (match) => {
+    const parts = match.split('/');
+    const num = parts.length === 2 ? parseFloat(parts[0]) / parseFloat(parts[1]) : parseFloat(parts[0]);
+    const result = num * multiplier;
+    // Return as clean number — round to 2 decimal places, trim trailing zeros
+    return parseFloat(result.toFixed(2)).toString();
+  });
+}
+
+// ── Auto-save ──────────────────────────────────────────────────────────────
+function saveList() {
+  try {
+    localStorage.setItem('grocery_items', JSON.stringify(items));
+    localStorage.setItem('grocery_nextId', String(nextId));
+    const dot = document.getElementById('save-dot');
+    const msg = document.getElementById('save-msg');
+    if (dot) dot.style.background = '#27ae60';
+    if (msg) msg.textContent = 'Saved just now';
+    setTimeout(() => { if (msg) msg.textContent = 'Auto-saves as you go'; }, 2000);
+  } catch(e) {}
+}
+
+function loadList() {
+  try {
+    const saved = localStorage.getItem('grocery_items');
+    const savedId = localStorage.getItem('grocery_nextId');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) items = parsed;
+    }
+    if (savedId) {
+      const id = parseInt(savedId, 10);
+      if (!isNaN(id)) nextId = id;
+    }
+  } catch(e) {
+    items = [];
+    nextId = 1;
+    try { localStorage.removeItem('grocery_items'); localStorage.removeItem('grocery_nextId'); } catch(e2) {}
+  }
+}
+
+function copyList() {
+  if (!items.length) return;
+  const lines = [];
+  CATEGORIES.forEach(cat => {
+    const catItems = items.filter(i => (CATEGORIES.includes(i.category) ? i.category : 'Other') === cat);
+    if (!catItems.length) return;
+    lines.push('── ' + cat.toUpperCase() + ' ──');
+    catItems.forEach(item => {
+      const check = item.checked ? '✓ ' : '• ';
+      lines.push(check + item.name + (item.qty ? ' (' + item.qty + ')' : ''));
+    });
+    lines.push('');
+  });
+  const text = lines.join('\n').trim();
+  navigator.clipboard.writeText(text).then(() => {
+    setStatus('save-msg', 'List copied to clipboard!');
+    setTimeout(() => setStatus('save-msg', 'Auto-saves as you go'), 2500);
+  }).catch(() => {
+    setStatus('save-msg', 'Copy failed — try selecting manually');
+    setTimeout(() => setStatus('save-msg', 'Auto-saves as you go'), 3000);
+  });
+}
+  items = [];
+  nextId = 1;
+  try {
+    localStorage.setItem('grocery_items', JSON.stringify([]));
+    localStorage.setItem('grocery_nextId', '1');
+  } catch(e) {}
+  const container = document.getElementById('grocery-list');
+  if (container) container.innerHTML = '<div class="empty-state">No items yet — paste a recipe page above or quick-add below.</div>';
+  document.getElementById('summary-bar').style.display = 'none';
+  document.getElementById('clear-btn').style.display = 'none';
+  setStatus('save-msg', 'List cleared', 2000);
+}
+
+const FOOD_WORDS = /\b(chicken|beef|pork|lamb|turkey|salmon|shrimp|tuna|bacon|sausage|egg|milk|butter|cream|cheese|yogurt|flour|sugar|salt|pepper|oil|vinegar|garlic|onion|tomato|potato|carrot|celery|broccoli|spinach|lettuce|kale|avocado|lemon|lime|orange|apple|banana|mushroom|zucchini|corn|bean|rice|pasta|bread|tortilla|tomatillo|cilantro|parsley|basil|thyme|oregano|cumin|paprika|coriander|ginger|jalapen|serrano|poblano|chipotle|salsa|broth|stock|honey|mustard|mayo|ketchup|soy|coconut|chocolate|vanilla|baking|oat|noodle|tofu|anchovie|caper|olive|arugula|romaine|scallion|chive|dill|mint|rosemary|sage|clove|nutmeg|cinnamon|turmeric|cayenne|chili|mango|pineapple|strawberr|blueberr|raspberr|walnut|almond|pecan|cashew|pistachio|peanut|sesame|quinoa|lentil|chickpea|miso|tahini|pesto|ricotta|mozzarella|parmesan|cheddar|cotija|feta|gouda|monterey|provolone|fraiche|buttermilk|rotisserie|prosciutto|pancetta|chorizo|tilapia|halibut|scallop|clam|mussel)/i;
+
+const JUNK = [
+  /^(advertisement|sponsored|shop now|buy now|sign up|log in|subscribe|newsletter|follow|share|print|save|jump to recipe|recipe card|nutrition|calories|servings?|prep time|cook time|total time|course|cuisine|keyword|author|rating|reviews?|comments?|ingredients?$|instructions?$|directions?$|method$|steps?$|notes?$|tips?$|equipment$|related|you may also|more recipes|popular|recent posts?|categories|tags?|search|home|about|contact|privacy|terms|copyright|all rights reserved|\d+ comments?|\d+ reviews?|click here|read more|see more|load more|view all|show more|pin it|tweet|facebook|instagram|youtube|tiktok|pinterest|twitter|email|print recipe|scale|1x|2x|3x|metric|imperial|us customary)/i,
+  /https?:\/\//,/^[@#]/,/^\s*$/,/^.{0,2}$/,/^.{151,}$/,
+  /\b(click|tap|button|link|menu|nav|sidebar|footer|header|modal|popup|banner)\b/i,
+  /^\d+(\.\d+)?\s*(cal|kcal|g|mg|%)\s*$/i,
+  /^(fat|carb|protein|sodium|fiber|sugar|cholesterol|vitamin|mineral|iron|calcium|potassium)\b/i,
+];
+
+function looksLikeIngredient(line) {
+  const t = line.trim();
+  if (!t || t.length < 3 || t.length > 150) return false;
+  if (FOOD_WORDS.test(t)) return true;
+  for (const p of JUNK) { if (p.test(t)) return false; }
+  if (/^[\d\s./½¼¾⅓⅔⅛]+\s*(cup|tbsp|tsp|oz|lb|g|kg|ml|l|quart|pint|bunch|head|clove|can|jar|bottle|piece|sprig|stalk|medium|large|small|whole|fresh|dried|chopped|minced|diced|sliced|shredded|grated)/i.test(t)) return true;
+  return false;
+}
+
+function cleanLine(l) { return l.replace(/^\s*[-•*·▪▸►✓✔▢□■●◆▷]\s*/,'').replace(/^\d+\.\s*/,'').replace(/\s+/g,' ').trim(); }
+
+function normalizeName(name) {
+  return name.replace(/^fresh\s+([\w\s]+)/i, (match, ingredient) => {
+    return ingredient.trim() + ', fresh';
+  });
+}
+
+function parseQty(line) {
+  // Match quantity + unit at the start of the line, then the ingredient name after
+  const m = line.match(/^([\d\s./½¼¾⅓⅔⅛]+\s*(?:tablespoons?|teaspoons?|cups?|fluid\s+oz|ounces?|pounds?|tbsp|tsp|oz|lb|lbs|g|kg|ml|l|quarts?|pints?|gallons?|bunches?|heads?|cloves?|cans?|jars?|bottles?|pieces?|sprigs?|stalks?|slices?|medium|large|small|whole)?)\s+(.+)$/i);
+  if (m && m[2]) return { qty: m[1].trim(), name: normalizeName(m[2].trim()) };
+  return { qty: '', name: normalizeName(line) };
+}
+
+function getCategory(name) {
+  const n = name.toLowerCase();
+  if (/chicken|beef|pork|salmon|shrimp|turkey|lamb|sausage|bacon|tuna|steak|ground|rotisserie/.test(n)) return 'Meat & Seafood';
+  if (/milk|cheese|butter|cream|egg|yogurt|sour cream|creme fraiche|crème/.test(n)) return 'Dairy & Eggs';
+  if (/bread|tortilla|bun|roll|bagel|pita/.test(n)) return 'Bread & Bakery';
+  if (/apple|banana|lemon|lime|onion|garlic|tomato|pepper|lettuce|spinach|potato|carrot|celery|broccoli|mushroom|avocado|cilantro|herb|basil|parsley|kale|cucumber|zucchini|corn|ginger|jalap|scallion|tomatillo|poblano|serrano|mango|pineapple|strawberry|blueberry|sweet potato/.test(n)) return 'Produce';
+  if (/frozen|ice cream/.test(n)) return 'Frozen';
+  if (/juice|soda|water|wine|beer|broth|stock|coffee|tea/.test(n)) return 'Beverages';
+  if (/chip|cracker|cookie|snack|nut|almond|cashew|pretzel/.test(n)) return 'Snacks';
+  return 'Pantry';
+}
+
+function cleanAndPreview() {
+  const raw = document.getElementById('paste-input').value;
+  if (!raw.trim()) return;
+  const lines = raw.split('\n').map(cleanLine).filter(l => l.length > 0);
+  const candidates = [], seen = new Set();
+  lines.forEach(line => {
+    if (looksLikeIngredient(line)) {
+      const key = line.toLowerCase();
+      if (!seen.has(key)) { seen.add(key); candidates.push({ text: line, checked: true }); }
+    }
+  });
+  if (!candidates.length) {
+    setStatus('clean-status','<span class="error-msg">No ingredients found — try selecting just the ingredients section.</span>',5000);
+    return;
+  }
+  previewCandidates = candidates;
+  renderPreview();
+  document.getElementById('preview-area').style.display = 'block';
+  setStatus('clean-status','');
+}
+
+function renderPreview() {
+  document.getElementById('preview-items').innerHTML = previewCandidates.map((c,i) =>
+    '<div class="preview-item"><input type="checkbox" id="pc'+i+'" '+(c.checked?'checked':'')+' onchange="togglePreview('+i+',this.checked)"><label for="pc'+i+'" id="pl'+i+'">'+ esc(c.text)+'</label></div>'
+  ).join('');
+}
+
+function togglePreview(i,val) {
+  previewCandidates[i].checked=val;
+  const l=document.getElementById('pl'+i);
+  if(l) l.className=val?'':'removed';
+}
+
+function confirmAdd() {
+  let added=0;
+  previewCandidates.filter(c=>c.checked).forEach(c=>{
+    const {qty,name}=parseQty(c.text);
+    const scaledQty = multiplyQty(qty, currentMultiplier);
+    if(name&&!items.find(i=>i.name.toLowerCase()===name.toLowerCase())){
+      items.push({id:uid(),name,qty:scaledQty,category:getCategory(name),checked:false});
+      added++;
+    }
+  });
+  document.getElementById('paste-input').value='';
+  document.getElementById('preview-area').style.display='none';
+  previewCandidates=[];
+  setMultiplier(1);
+  setStatus('clean-status','<span class="success-msg">Added '+added+' item'+(added!==1?'s':'')+'</span>',3000);
+  render();
+}
+
+function cancelPreview() { document.getElementById('preview-area').style.display='none'; previewCandidates=[]; setMultiplier(1); }
+
+function addManual() {
+  const n=document.getElementById('manual-item'),q=document.getElementById('manual-qty');
+  const name=n.value.trim(); if(!name) return;
+  items.push({id:uid(),name,qty:q.value.trim(),category:getCategory(name),checked:false});
+  n.value=''; q.value=''; render();
+}
+
+function setStatus(id,html,clear) {
+  const el=document.getElementById(id); if(!el) return;
+  el.innerHTML=html;
+  if(clear) setTimeout(()=>{el.innerHTML='';},clear);
+}
+
+function toggleItem(id){const i=items.find(x=>x.id===id);if(i){i.checked=!i.checked;render();}}
+function deleteItem(id){items=items.filter(x=>x.id!==id);render();}
+function clearChecked(){items=items.filter(x=>!x.checked);render();}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function render() {
+  const total=items.length,done=items.filter(i=>i.checked).length,remaining=total-done;
+  document.getElementById('summary-bar').style.display=total?'flex':'none';
+  document.getElementById('clear-btn').style.display=done?'inline-block':'none';
+  if(total){document.getElementById('s-total').textContent=total;document.getElementById('s-remaining').textContent=remaining;document.getElementById('s-done').textContent=done;}
+  const container=document.getElementById('grocery-list');
+  if(!total){container.innerHTML='<div class="empty-state">No items yet — paste a recipe page above or quick-add below.</div>';return;}
+  const grouped={};
+  CATEGORIES.forEach(c=>{grouped[c]=[];});
+  items.forEach(item=>{(grouped[CATEGORIES.includes(item.category)?item.category:'Other']).push(item);});
+  let html='';
+  CATEGORIES.forEach(cat=>{
+    const ci=grouped[cat]; if(!ci.length) return;
+    html+='<div class="category-group"><div class="category-title">'+cat+'</div>';
+    ci.forEach(item=>{
+      html+='<div class="item-row">'
+        +'<div class="item-check'+(item.checked?' checked':'')+'" onclick="toggleItem('+item.id+')"></div>'
+        +'<span class="item-label'+(item.checked?' crossed':'')+'">'+esc(item.name)+(item.qty?' <span class="item-qty">('+esc(item.qty)+')</span>':'')+'</span>'
+        +'<button class="item-del" onclick="deleteItem('+item.id+')" title="Remove">&times;</button>'
+        +'</div>';
+    });
+    html+='</div>';
+  });
+  container.innerHTML=html;
+  saveList();
+}
+
+try { loadList(); } catch(e) { items = []; nextId = 1; }
+try { render(); } catch(e) { document.getElementById('grocery-list').innerHTML = '<div class="empty-state">No items yet — paste a recipe page above or quick-add below.</div>'; }
+</script>
+
+</body>
+</html>
